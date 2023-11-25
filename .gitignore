@@ -1,0 +1,17 @@
+# Build	
+bin/*
+*.o
+
+# Gcov
+gcov/*
+*.cov
+*.gcno
+
+# Doxygen
+doc/html
+doc/latex
+
+# Other
+!**/.gitkeep
+*.tar.gz
+*.pdf
