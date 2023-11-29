@@ -22,22 +22,21 @@ gzip compression and decompression are implemented using the [zlib](https://gith
 The syntax of ctar is the following:
 
 ```bash
-ctar {-l|-e|-c} [-d DIR] [-z] [-v] ARCHIVE [FILES...]
+ctar {-l|-e|-c} ARCHIVE [-d DIR] [-zvh] [FILES...]
 ```
 
 ### Arguments
 #### Required arguments:
 - One of the following operations (mutually exclusive)
-  - `-l, --list`: List files in archive
-  - `-e, --extract`: Extract files from archive
-  - `-c, --create`: Create archive
-- `ARCHIVE`: The archive file to operate on
+  - `-l, --list ARCHIVE`: List files in archive
+  - `-e, --extract ARCHIVE`: Extract files from archive
+  - `-c, --create ARCHIVE`: Create archive
 
 #### Optional arguments:
 - `-d, --directory DIR`: Change to DIR before performing any operations.  This option is order-sensitive, i.e. it affects all options that follow.
 - `-z, --compress`: Compress or decompress the archive using gzip
 - `-v, --verbose`: enable *verbose* mode
-- `-h, --help`: display this help
+- `-h, --help`: display help
 - `FILES...`: The files to add to the archive
 
 ### Examples
