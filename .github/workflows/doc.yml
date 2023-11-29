@@ -10,11 +10,11 @@ jobs:
   doc:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Doxygen
         uses: mattnotmitt/doxygen-action@1.9.5
         with:
           doxyfile-path: doc/doxygen.conf
-      
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
