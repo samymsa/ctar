@@ -1,4 +1,5 @@
 #include "argparse.h"
+#include "compress.h"
 #include <stdio.h>
 
 int main(int argc, char **argv)
@@ -20,6 +21,9 @@ int main(int argc, char **argv)
     printf("%s ", args.files[i]);
   }
   printf("\n");
+
+  if (args.compress)
+    zlib_test(argc, argv);
   
   return EXIT_SUCCESS;
 }
