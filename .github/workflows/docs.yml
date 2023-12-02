@@ -15,15 +15,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Build Docs
         uses: mattnotmitt/doxygen-action@v1.9.5
         with:
           doxyfile-path: ${{ env.DOC_DIR }}/Doxyfile
+
       - name: Fix permissions
         run: |
           chmod -c -R +rX ${{ env.DOC_DIR }} | while read line; do
             echo "::warning title=Invalid file permissions automatically fixed::$line"
           done
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v2
         with:
