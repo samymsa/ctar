@@ -9,6 +9,11 @@ CTar is a simple tar-like program written in C. It supports the following featur
 
 gzip compression and decompression are implemented using the [zlib](https://github.com/madler/zlib/tree/master) library.
 
+## Documentation
+
+The full doxygen generated documentation can be found at [https://samymsa.github.io/ctar/](https://samymsa.github.io/ctar/)
+
+It is deployed automatically using the [Doxygen GitHub Pages Deploy Action](https://github.com/marketplace/actions/doxygen-github-pages-deploy-action) and uses the [Doxygen Awesome](https://github.com/jothepro/doxygen-awesome-css) theme.
 
 ## Installation
 
