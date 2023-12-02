@@ -36,13 +36,16 @@ docs:
 	doxygen $(DOC_DIR)/Doxyfile
 
 gcov: $(GEXEC)
-	# generate some data for gcov by calling the generated binary with various options
-	$(GCOV_DIR)/$(GEXEC) -h
-	$(GCOV_DIR)/$(GEXEC) -i input -o output -v
+	# Run tests to generate gcov files
+	$(GCOV_DIR)/$(GEXEC) || true
+	$(GCOV_DIR)/$(GEXEC) -h || true
+	$(GCOV_DIR)/$(GEXEC) -l test.tar || true
 
-	find ./ -maxdepth 1 -name *.gcno -exec mv {} $(GCOV_DIR) \;
-	find ./ -maxdepth 1 -name *.gcda -exec mv {} $(GCOV_DIR) \;
+	# Move gcov files to the gcov directory
+	mv *.gcno $(GCOV_DIR)
+	mv *.gcda $(GCOV_DIR)
 
+	# Generate the report
 	gcov -o $(GCOV_DIR) $(GEXEC)
 	lcov -o $(GCOV_DIR)/$(LCOV_REPORT) -c -f -d $(GCOV_DIR)
 	genhtml -o $(GCOV_DIR)/report $(GCOV_DIR)/$(LCOV_REPORT)
@@ -59,4 +62,4 @@ mrproper: clean
 	rm -rf $(DOC_DIR)/html/
 	rm -rf $(GCOV_DIR)/*
 
-.PHONY: all docs gcov package clean mrproper
+.PHONY: all docs tests gcov package clean mrproper

@@ -15,6 +15,14 @@ The full doxygen generated documentation can be found at [https://samymsa.github
 
 It is deployed automatically using the [Doxygen GitHub Pages Deploy Action](https://github.com/marketplace/actions/doxygen-github-pages-deploy-action) and uses the [Doxygen Awesome](https://github.com/jothepro/doxygen-awesome-css) theme.
 
+## Prerequisites
+
+- [Build Essential](https://packages.ubuntu.com/focal/build-essential) (for compiling) : `sudo apt install build-essential`
+- [Doxygen](https://packages.ubuntu.com/focal/doxygen) (optional, for generating documentation) : `sudo apt install doxygen`
+- [Graphviz](https://packages.ubuntu.com/focal/graphviz) (optional, for generating documentation graphs) : `sudo apt install graphviz`
+- [Lcov](https://packages.ubuntu.com/focal/lcov) (optional, for generating coverage reports) : `sudo apt install lcov`
+
+
 ## Installation
 
 1. Compile the program using `make`
