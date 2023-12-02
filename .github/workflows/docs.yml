@@ -9,7 +9,7 @@ on:
       - main
 
 env:
-  DOC_DIR: docs/
+  DOC_DIR: docs
 
 jobs:
   build:
@@ -18,16 +18,16 @@ jobs:
       - name: Build Docs
         uses: mattnotmitt/doxygen-action@v1.9.5
         with:
-          doxyfile-path: $DOC_DIR/Doxyfile
+          doxyfile-path: ${{ env.DOC_DIR }}/Doxyfile
       - name: Fix permissions
         run: |
-          chmod -c -R +rX $DOC_DIR | while read line; do
+          chmod -c -R +rX ${{ env.DOC_DIR }} | while read line; do
             echo "::warning title=Invalid file permissions automatically fixed::$line"
           done
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: $DOC_DIR/html
+          path: ${{ env.DOC_DIR }}/html
 
   deploy:
     # Add a dependency to the build job
