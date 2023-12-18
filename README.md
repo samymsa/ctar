@@ -1,7 +1,7 @@
 # CTar
 
 CTar is a simple tar-like program written in C. It supports the following features:
-- [ ] Listing files in a tar archive
+- [x] Listing files in a tar archive
 - [ ] Extracting files from a tar archive
 - [ ] Creating a tar archive
 - [ ] Compressing a tar archive using gzip
