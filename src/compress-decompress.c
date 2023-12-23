@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <string.h> // for strlen
+#include <string.h>
 #include <assert.h>
-#include "zlib.h" // for zlib functions
+#include "zlib.h"
 
 z_stream compress_file(char *input, char *output, size_t output_size)
 {

@@ -1,5 +1,5 @@
 #include "argparse.h"
-#include "compress.h"
+#include "compress-decompress.h"
 #include <stdio.h>
 
 int main(int argc, char **argv)
