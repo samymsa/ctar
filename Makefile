@@ -5,7 +5,7 @@ LDFLAGS=-I ./include/ -lz
 SRC_DIR=./src
 INC_DIR=./include
 BIN_DIR=./bin
-DOC_DIR=./doc
+DOC_DIR=./docs
 GCOV_DIR=./gcov
 
 GCOVFLAGS=-O0 --coverage -lgcov -Wall -g
@@ -32,22 +32,25 @@ $(EXEC): $(OBJ)
 $(GEXEC):
 	$(CC) $(GCOVFLAGS) -o $(GCOV_DIR)/$@ -Wall $(SRC) $(LDFLAGS)
 
-doc:
-	doxygen $(DOC_DIR)/doxygen.conf
+docs:
+	doxygen $(DOC_DIR)/Doxyfile
 
 gcov: $(GEXEC)
-	# generate some data for gcov by calling the generated binary with various options
-	$(GCOV_DIR)/$(GEXEC) -h
-	$(GCOV_DIR)/$(GEXEC) -i input -o output -v
+	# Run tests to generate gcov files
+	$(GCOV_DIR)/$(GEXEC) || true
+	$(GCOV_DIR)/$(GEXEC) -h || true
+	$(GCOV_DIR)/$(GEXEC) -l test.tar || true
 
-	find ./ -maxdepth 1 -name *.gcno -exec mv {} $(GCOV_DIR) \;
-	find ./ -maxdepth 1 -name *.gcda -exec mv {} $(GCOV_DIR) \;
+	# Move gcov files to the gcov directory
+	mv *.gcno $(GCOV_DIR)
+	mv *.gcda $(GCOV_DIR)
 
+	# Generate the report
 	gcov -o $(GCOV_DIR) $(GEXEC)
 	lcov -o $(GCOV_DIR)/$(LCOV_REPORT) -c -f -d $(GCOV_DIR)
 	genhtml -o $(GCOV_DIR)/report $(GCOV_DIR)/$(LCOV_REPORT)
 
-package: gcov doc all
+package: gcov docs all
 	rm -rf $(AR_NAME)
 	tar cvfz $(AR_NAME) ./*
 clean:	
@@ -59,4 +62,4 @@ mrproper: clean
 	rm -rf $(DOC_DIR)/html/
 	rm -rf $(GCOV_DIR)/*
 
-.PHONY: all doc gcov package clean mrproper
+.PHONY: all docs tests gcov package clean mrproper

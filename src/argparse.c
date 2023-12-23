@@ -29,11 +29,6 @@ static const struct option options[] =
  */
 static const char *optstr = "l:e:c:d:zvh";
 
-/**
- * @brief Print usage of the binary
- *
- * @param bin_name
- */
 void print_usage(char *bin_name)
 {
   char *syntax = "{-l|-e|-c} ARCHIVE [-d DIR] [-zvh] [FILES...]";
@@ -50,11 +45,11 @@ void print_usage(char *bin_name)
 }
 
 /**
- * @brief Parse binary options
- *
- * @param argc number of arguments
- * @param argv arguments
- * @param args @ref ctar_args output structure
+ * This function may exit with EXIT_FAILURE if one of the following conditions is met:
+ * - the user specifies more than one of -l, -e, -c
+ * - the user specifies an invalid option
+ * 
+ * If the user specifies -h (or --help), the function prints the usage and exits with EXIT_SUCCESS.
  */
 void parse_args(int argc, char **argv, ctar_args *args)
 {

@@ -1,13 +1,26 @@
 # CTar
 
 CTar is a simple tar-like program written in C. It supports the following features:
-- [ ] Listing files in a tar archive
+- [x] Listing files in a tar archive
 - [ ] Extracting files from a tar archive
 - [ ] Creating a tar archive
 - [ ] Compressing a tar archive using gzip
 - [ ] Decompressing a tar archive using gzip
 
 gzip compression and decompression are implemented using the [zlib](https://github.com/madler/zlib/tree/master) library.
+
+## Documentation
+
+The full doxygen generated documentation can be found at [https://samymsa.github.io/ctar/](https://samymsa.github.io/ctar/)
+
+It is deployed automatically using the [Doxygen GitHub Pages Deploy Action](https://github.com/marketplace/actions/doxygen-github-pages-deploy-action) and uses the [Doxygen Awesome](https://github.com/jothepro/doxygen-awesome-css) theme.
+
+## Prerequisites
+
+- [Build Essential](https://packages.ubuntu.com/focal/build-essential) (for compiling) : `sudo apt install build-essential`
+- [Doxygen](https://packages.ubuntu.com/focal/doxygen) (optional, for generating documentation) : `sudo apt install doxygen`
+- [Graphviz](https://packages.ubuntu.com/focal/graphviz) (optional, for generating documentation graphs) : `sudo apt install graphviz`
+- [Lcov](https://packages.ubuntu.com/focal/lcov) (optional, for generating coverage reports) : `sudo apt install lcov`
 
 
 ## Installation

@@ -8,8 +8,8 @@ gcov/*
 *.gcno
 
 # Doxygen
-doc/html
-doc/latex
+docs/html
+docs/latex
 
 # Other
 !**/.gitkeep
