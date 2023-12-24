@@ -1,9 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include "zlib.h"
 
-z_stream compress_file(char *input, char *output, size_t output_size)
+z_stream compress_archive(char *input, size_t input_size, char *output, size_t output_size)
 {
     // zlib struct
     z_stream defstream;
@@ -12,10 +13,10 @@ z_stream compress_file(char *input, char *output, size_t output_size)
     defstream.opaque = Z_NULL;
 
     // setup input and compressed output
-    defstream.avail_in = (uInt)strlen(input) + 1; // size of input, string + terminator
-    defstream.next_in = (Bytef *)input;           // input char array
-    defstream.avail_out = output_size;            // size of output
-    defstream.next_out = (Bytef *)output;         // output char array
+    defstream.avail_in = input_size;      // size of input
+    defstream.next_in = (Bytef *)input;   // input char array
+    defstream.avail_out = output_size;    // size of output
+    defstream.next_out = (Bytef *)output; // output char array
 
     // the actual compression work
     deflateInit(&defstream, Z_BEST_COMPRESSION);
@@ -25,7 +26,7 @@ z_stream compress_file(char *input, char *output, size_t output_size)
     return defstream;
 }
 
-z_stream decompress_file(char *input, char *output, size_t output_size, z_stream defstream)
+z_stream decompress_archive(char *input, char *output, size_t output_size, z_stream defstream)
 {
     // zlib struct
     z_stream infstream;
@@ -49,47 +50,68 @@ z_stream decompress_file(char *input, char *output, size_t output_size, z_stream
 
 int main(int argc, char *argv[])
 {
-    // open the file in binary mode
-    FILE *input_file = fopen("lorem.txt", "rb");
+    // open the archive in binary mode
+    FILE *input_archive = fopen("archive.tar", "rb");
+    if (input_archive == NULL)
+    {
+        perror("Error during the opening of the archive");
+        return 1;
+    }
 
-    // read the entire file into a buffer
-    char input_buffer[BUFSIZ];
-    size_t input_size = fread(input_buffer, 1, sizeof(input_buffer), input_file);
+    // get the size of the archive
+    fseek(input_archive, 0, SEEK_END);
+    size_t input_size = ftell(input_archive);
+    fseek(input_archive, 0, SEEK_SET);
 
-    // print the size of the file
-    printf("Taille du fichier d'origine : %lu octets\n", input_size);
+    // allocate memory for the archive
+    char *input_buffer = (char *)malloc(input_size);
+    if (input_buffer == NULL)
+    {
+        perror("Erreur d'allocation mémoire");
+        fclose(input_archive);
+        return 1;
+    }
+
+    // print the size of the archive
+    fread(input_buffer, 1, input_size, input_archive);
+    printf("Taille de l'archive d'origine : %lu octets\n", input_size);
 
     // compression process
     char output_buffer[BUFSIZ];
-    z_stream defstream = compress_file(input_buffer, output_buffer, sizeof(output_buffer));
+    z_stream defstream = compress_archive(input_buffer, input_size, output_buffer, sizeof(output_buffer));
 
     // write compressed data to file
-    FILE *output_file = fopen("compressed-lorem", "wb");
-    fwrite(output_buffer, 1, defstream.total_out, output_file);
+    FILE *output_archive = fopen("compressed-archive.tar.gz", "wb");
+    fwrite(output_buffer, 1, defstream.total_out, output_archive);
 
-    // print the size of the compressed file
-    printf("Taille du fichier compressé : %lu octets\n", defstream.total_out);
+    // print the size of the compressed archive
+    printf("Taille de l'archive compressée : %lu octets\n", defstream.total_out);
 
-    fclose(input_file);
-    fclose(output_file);
+    // close the files
+    fclose(input_archive);
+    fclose(output_archive);
 
-    // read the entire file compressed into a buffer
-    input_file = fopen("compressed-lorem", "rb");
-    input_size = fread(input_buffer, 1, sizeof(input_buffer), input_file);
+    // read the entire compressed archive into a buffer
+    input_archive = fopen("compressed-archive.tar.gz", "rb");
+    input_size = fread(input_buffer, 1, input_size, input_archive);
 
     // decompression process
     char decompressed_buffer[BUFSIZ];
-    z_stream infstream = decompress_file(input_buffer, decompressed_buffer, sizeof(decompressed_buffer), defstream);
+    z_stream infstream = decompress_archive(input_buffer, decompressed_buffer, sizeof(decompressed_buffer), defstream);
 
     // write decompressed data to file
-    FILE *decompressed_file = fopen("decompressed-lorem.txt", "wb");
-    fwrite(decompressed_buffer, 1, strlen(decompressed_buffer), decompressed_file);
+    FILE *decompressed_archive = fopen("decompressed-archive.tar", "wb");
+    fwrite(decompressed_buffer, 1, strlen(decompressed_buffer), decompressed_archive);
 
-    // print the size of the decompressed file
-    printf("Taille du fichier décompressé : %lu octets\n", strlen(decompressed_buffer));
+    // print the size of the decompressed archive
+    printf("Taille de l'archive décompressée : %lu octets\n", infstream.total_out);
 
-    fclose(input_file);
-    fclose(decompressed_file);
+    // free the memory allocated for the archive
+    free(input_buffer);
+
+    // close the files
+    fclose(input_archive);
+    fclose(decompressed_archive);
 
     return 0;
 }
