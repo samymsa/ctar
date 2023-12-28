@@ -8,15 +8,36 @@
 #include "ctar.h"
 #include "utils.h"
 
-int ctar_list(ctar_args *args)
+/**
+ * If args->list or args->extract is true, the archive is opened in read-only mode.
+ * Otherwise, the archive is opened in write-only mode.
+ */
+int ctar_open(ctar_args *args)
 {
-  int fd = open(args->archive, O_RDONLY);
+  int flags = args->list || args->extract ? O_RDONLY : O_WRONLY | O_CREAT | O_TRUNC;
+  int fd = open(args->archive, flags, 0644);
   if (fd == -1)
   {
     perror("Unable to open archive");
     return -1;
   }
 
+  return fd;
+}
+
+int ctar_close(int fd)
+{
+  if (close(fd) == -1)
+  {
+    perror("Unable to close archive");
+    return -1;
+  }
+
+  return 0;
+}
+
+int ctar_list(ctar_args *args, int fd)
+{
   ctar_header header;
   int nbytes;
   int blank_header_count = 0;
@@ -48,12 +69,6 @@ int ctar_list(ctar_args *args)
   if (nbytes == -1)
   {
     perror("Unable to read archive");
-    return -1;
-  }
-
-  if (close(fd) == -1)
-  {
-    perror("Unable to close archive");
     return -1;
   }
 
