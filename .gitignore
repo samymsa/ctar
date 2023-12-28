@@ -15,3 +15,4 @@ docs/latex
 !**/.gitkeep
 *.tar.gz
 *.pdf
+tests
