@@ -4,12 +4,29 @@
 #include "typedef.h"
 
 /**
+ * @brief Open an archive in the correct mode.
+ * 
+ * @param args The arguments of the program.
+ * @return int file descriptor of the archive if successful, -1 otherwise.
+ */
+int ctar_open(ctar_args *args);
+
+/**
+ * @brief Close an archive.
+ * 
+ * @param fd The file descriptor of the archive.
+ * @return int 0 if successful, -1 otherwise.
+ */
+int ctar_close(int fd);
+
+/**
  * @brief List the content of the archive.
  * 
  * @param args The arguments of the program.
+ * @param fd The file descriptor of the archive.
  * @return int 0 if successful, -1 otherwise. 
  */
-int ctar_list(ctar_args *args);
+int ctar_list(ctar_args *args, int fd);
 
 /**
  * @brief Print a ctar entry.
