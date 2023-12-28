@@ -136,7 +136,15 @@ int ctar_list_entry(ctar_header *header, bool verbose)
   }
 
   // File name
-  printf("%.*s\n", CTAR_NAME_SIZE, header->name);
+  printf("%.*s", CTAR_NAME_SIZE, header->name);
+
+  // Link name (if applicable)
+  if (verbose && header->typeflag[0] == LNKTYPE)
+  {
+    printf(" -> %.*s", CTAR_LINKNAME_SIZE, header->linkname);
+  }
+
+  printf("\n");
 
   return 0;
 }
