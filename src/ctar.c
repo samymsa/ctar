@@ -139,7 +139,7 @@ int ctar_list_entry(ctar_header *header, bool verbose)
   printf("%.*s", CTAR_NAME_SIZE, header->name);
 
   // Link name (if applicable)
-  if (verbose && header->typeflag[0] == LNKTYPE)
+  if (verbose && header->typeflag[0] == SYMTYPE)
   {
     printf(" -> %.*s", CTAR_LINKNAME_SIZE, header->linkname);
   }
