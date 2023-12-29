@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
     printf("Taille de l'archive d'origine : %lu octets\n", input_size);
 
     // compression process
-    char output_buffer[BUFSIZ];
+    char output_buffer[input_size];
     z_stream defstream = compress_archive(input_buffer, input_size, output_buffer, sizeof(output_buffer));
 
     // write compressed data to file
@@ -93,15 +93,15 @@ int main(int argc, char *argv[])
 
     // read the entire compressed archive into a buffer
     input_archive = fopen("compressed-archive.tar.gz", "rb");
-    input_size = fread(input_buffer, 1, input_size, input_archive);
+    fread(input_buffer, 1, input_size, input_archive);
 
     // decompression process
-    char decompressed_buffer[BUFSIZ];
+    char decompressed_buffer[input_size];
     z_stream infstream = decompress_archive(input_buffer, decompressed_buffer, sizeof(decompressed_buffer), defstream);
 
     // write decompressed data to file
     FILE *decompressed_archive = fopen("decompressed-archive.tar", "wb");
-    fwrite(decompressed_buffer, 1, strlen(decompressed_buffer), decompressed_archive);
+    fwrite(decompressed_buffer, 1, sizeof(decompressed_buffer), decompressed_archive);
 
     // print the size of the decompressed archive
     printf("Taille de l'archive décompressée : %lu octets\n", infstream.total_out);
