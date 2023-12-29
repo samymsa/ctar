@@ -60,6 +60,28 @@ typedef struct ctar_args
   bool verbose;
 } ctar_args;
 
+#define CTAR_HEADER_INIT \
+  (ctar_header)         \
+  {                     \
+    .name = "",         \
+    .mode = "",         \
+    .uid = "",          \
+    .gid = "",          \
+    .size = "",         \
+    .mtime = "",        \
+    .chksum = "",       \
+    .typeflag = "",     \
+    .linkname = "",     \
+    .magic = "ustar",   \
+    .version = "00",    \
+    .uname = "",        \
+    .gname = "",        \
+    .devmajor = "",     \
+    .devminor = "",     \
+    .prefix = "",       \
+    .pad = "",          \
+  }
+
 /** @brief USTAR format header structure */
 typedef struct ctar_header
 {

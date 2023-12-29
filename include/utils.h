@@ -14,6 +14,15 @@
 int oct2dec(char *oct, int size);
 
 /**
+ * @brief Convert a decimal integer to an octal string.
+ *
+ * @param dec The decimal integer.
+ * @param oct The octal output string.
+ * @param size The size of the string.
+ */
+void dec2oct(int dec, char *oct, int size);
+
+/**
  * @brief Check if a header is blank.
  *
  * @param header The header to check.
@@ -47,5 +56,13 @@ int skip_data_blocks(int fd, ctar_header *header);
  * @return int The number of data blocks.
  */
 int get_nblocks(ctar_header *header);
+
+/**
+ * @brief Compute the checksum of a header.
+ *
+ * @param header The header to compute the checksum of.
+ * @note The checksum is stored in the header.
+ */
+void compute_checksum(ctar_header *header);
 
 #endif // _UTILS_H

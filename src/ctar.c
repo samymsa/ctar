@@ -7,6 +7,7 @@
 #include <time.h>
 #include <string.h>
 #include <libgen.h>
+#include <dirent.h>
 #include "ctar.h"
 #include "utils.h"
 
@@ -286,6 +287,209 @@ int ctar_extract_directory(ctar_header *header, int fd)
   if (mkdir_recursive(header->name, mode) == -1)
   {
     perror("Unable to create directory");
+    return -1;
+  }
+
+  return 0;
+}
+
+int ctar_create(ctar_args *args, int fd)
+{
+  for (int i = 0; args->files != NULL && args->files[i] != NULL; i++)
+  {
+    if (ctar_create_entry(args->files[i], args->verbose, fd) == -1)
+    {
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * The following file types are supported:
+ * - regular file (REGTYPE): '-'
+ * - symbolic link (SYMTYPE): 'l'
+ * - directory (DIRTYPE): 'd'
+ *
+ * @note The following USTAR fields are not used:
+ * - uname
+ * - gname
+ * - devmajor
+ * - devminor
+ * - prefix
+ */
+int ctar_create_entry(char *path, bool verbose, int fd)
+{
+  struct stat st;
+  if (lstat(path, &st) == -1)
+  {
+    perror("Unable to stat file");
+    return -1;
+  }
+
+  ctar_header header = CTAR_HEADER_INIT;
+  strncpy(header.name, path, CTAR_NAME_SIZE);
+  dec2oct(st.st_mode, header.mode, CTAR_MODE_SIZE);
+  dec2oct(st.st_uid, header.uid, CTAR_UID_SIZE);
+  dec2oct(st.st_gid, header.gid, CTAR_GID_SIZE);
+  dec2oct(st.st_size, header.size, CTAR_SIZE_SIZE);
+  dec2oct(st.st_mtime, header.mtime, CTAR_MTIME_SIZE);
+  compute_checksum(&header);
+
+  if (verbose)
+  {
+    printf("%.*s\n", CTAR_NAME_SIZE, header.name);
+  }
+
+  if (S_ISREG(st.st_mode))
+  {
+    return ctar_create_regular(&header, fd);
+  }
+
+  if (S_ISLNK(st.st_mode))
+  {
+    return ctar_create_symlink(&header, fd);
+  }
+
+  if (S_ISDIR(st.st_mode))
+  {
+    return ctar_create_directory(&header, fd);
+  }
+
+  fprintf(stderr, "Warning: unsupported file type '%c', skipping entry\n", header.typeflag[0]);
+  return 0;
+}
+
+int ctar_create_regular(ctar_header *header, int fd)
+{
+  // Write header
+  header->typeflag[0] = REGTYPE;
+  if (write(fd, header, sizeof(ctar_header)) == -1)
+  {
+    perror("Unable to write header");
+    return -1;
+  }
+
+  // Write data blocks
+  int in_fd = open(header->name, O_RDONLY);
+  if (in_fd == -1)
+  {
+    perror("Unable to open input file");
+    return -1;
+  }
+
+  // Copy data blocks
+  int nbytes;
+  char buf[CTAR_BLOCK_SIZE];
+  while ((nbytes = read(in_fd, buf, CTAR_BLOCK_SIZE)) > 0)
+  {
+    if (nbytes < CTAR_BLOCK_SIZE)
+    {
+      // Pad last block with zeros
+      memset(buf + nbytes, 0, CTAR_BLOCK_SIZE - nbytes);
+    }
+
+    if (write(fd, buf, nbytes) == -1)
+    {
+      perror("Unable to write to archive");
+      return -1;
+    }
+  }
+
+  if (nbytes == -1)
+  {
+    perror("Unable to read input file");
+    return -1;
+  }
+
+  // Close input file
+  if (close(in_fd) == -1)
+  {
+    perror("Unable to close input file");
+    return -1;
+  }
+
+  return 0;
+}
+
+int ctar_create_symlink(ctar_header *header, int fd)
+{
+  // Read link name
+  if (readlink(header->name, header->linkname, CTAR_LINKNAME_SIZE) == -1)
+  {
+    perror("Unable to read link name");
+    return -1;
+  }
+
+  // Write header
+  header->typeflag[0] = SYMTYPE;
+  dec2oct(0, header->size, CTAR_SIZE_SIZE); // Size is always 0 for symbolic links
+
+  if (write(fd, header, sizeof(ctar_header)) == -1)
+  {
+    perror("Unable to write header");
+    return -1;
+  }
+
+  return 0;
+}
+
+/**
+ * Adding a directory to the archive will recursively add all files and directories inside it.
+ */
+int ctar_create_directory(ctar_header *header, int fd)
+{
+  // Write header
+  header->typeflag[0] = DIRTYPE;
+  dec2oct(0, header->size, CTAR_SIZE_SIZE); // Size is always 0 for directories
+
+  if (write(fd, header, sizeof(ctar_header)) == -1)
+  {
+    perror("Unable to write header");
+    return -1;
+  }
+
+  // Add files and directories inside the directory
+  DIR *dir = opendir(header->name);
+  if (dir == NULL)
+  {
+    perror("Unable to open directory");
+    return -1;
+  }
+
+  struct dirent *entry;
+  while ((entry = readdir(dir)) != NULL)
+  {
+    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+    {
+      continue;
+    }
+
+    char path[CTAR_NAME_SIZE];
+
+    int snprint_result = snprintf(path, sizeof(path), "%s/%s", header->name, entry->d_name);
+    if (snprint_result >= sizeof(path))
+    {
+      fprintf(stderr, "Warning: path '%s/%s' is too long, skipping entry\n", header->name, entry->d_name);
+      continue;
+    }
+
+    if (snprint_result < 0)
+    {
+      fprintf(stderr, "Warning: unable to create path '%s/%s', skipping entry\n", header->name, entry->d_name);
+      continue;
+    }
+
+    if (ctar_create_entry(path, false, fd) == -1)
+    {
+      return -1;
+    }
+  }
+
+  if (closedir(dir) == -1)
+  {
+    perror("Unable to close directory");
     return -1;
   }
 
