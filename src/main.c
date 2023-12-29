@@ -18,6 +18,11 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
+  if (args.extract && ctar_extract(&args, fd) == -1)
+  {
+    return EXIT_FAILURE;
+  }
+
   if (ctar_close(fd) == -1)
   {
     return EXIT_FAILURE;
