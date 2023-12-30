@@ -8,6 +8,8 @@
 #include <string.h>
 #include <libgen.h>
 #include <dirent.h>
+#include <pwd.h>
+#include <grp.h>
 #include "ctar.h"
 #include "utils.h"
 
@@ -115,7 +117,22 @@ int ctar_list_entry(ctar_header *header, bool verbose)
     printf("%.10s ", mode_str);
 
     // Owner and group
-    printf("%.*s/%.*s ", CTAR_UNAME_SIZE, header->uname, CTAR_GNAME_SIZE, header->gname);
+    // Get user and group from header->uid and header->gid
+    struct passwd *pw = getpwuid(oct2dec(header->uid, CTAR_UID_SIZE));
+    if (pw == NULL)
+    {
+      perror("Unable to get user");
+      return -1;
+    }
+
+    struct group *gr = getgrgid(oct2dec(header->gid, CTAR_GID_SIZE));
+    if (gr == NULL)
+    {
+      perror("Unable to get group");
+      return -1;
+    }
+
+    printf("%.*s/%.*s ", CTAR_UNAME_SIZE, pw->pw_name, CTAR_GNAME_SIZE, gr->gr_name);
 
     // File size
     printf("%7d ", oct2dec(header->size, CTAR_SIZE_SIZE));
@@ -302,6 +319,21 @@ int ctar_create(ctar_args *args, int fd)
       return -1;
     }
   }
+  return ctar_create_end_of_archive(fd);
+}
+
+/**
+ * The end of archive is marked by two consecutive blank headers.
+ */
+int ctar_create_end_of_archive(int fd)
+{
+  char buf[2 * CTAR_BLOCK_SIZE];
+  memset(buf, 0, sizeof(buf));
+  if (write(fd, buf, sizeof(buf)) == -1)
+  {
+    perror("Unable to write end of archive");
+    return -1;
+  }
 
   return 0;
 }
@@ -321,11 +353,25 @@ int ctar_create(ctar_args *args, int fd)
  */
 int ctar_create_entry(char *path, bool verbose, int fd)
 {
+  // Check if path is not the same as the archive
+  struct stat st_archive;
+  if (fstat(fd, &st_archive) == -1)
+  {
+    perror("Unable to stat archive");
+    return -1;
+  }
+
   struct stat st;
   if (lstat(path, &st) == -1)
   {
     perror("Unable to stat file");
     return -1;
+  }
+
+  if (st_archive.st_dev == st.st_dev && st_archive.st_ino == st.st_ino)
+  {
+    fprintf(stderr, "Warning: archive and file '%s' are the same, skipping entry\n", path);
+    return 0;
   }
 
   ctar_header header = CTAR_HEADER_INIT;
@@ -335,7 +381,8 @@ int ctar_create_entry(char *path, bool verbose, int fd)
   dec2oct(st.st_gid, header.gid, CTAR_GID_SIZE);
   dec2oct(st.st_size, header.size, CTAR_SIZE_SIZE);
   dec2oct(st.st_mtime, header.mtime, CTAR_MTIME_SIZE);
-  compute_checksum(&header);
+  strncpy(header.uname, getpwuid(st.st_uid)->pw_name, CTAR_UNAME_SIZE);
+  strncpy(header.gname, getgrgid(st.st_gid)->gr_name, CTAR_GNAME_SIZE);
 
   if (verbose)
   {
@@ -365,6 +412,7 @@ int ctar_create_regular(ctar_header *header, int fd)
 {
   // Write header
   header->typeflag[0] = REGTYPE;
+  compute_checksum(header);
   if (write(fd, header, sizeof(ctar_header)) == -1)
   {
     perror("Unable to write header");
@@ -390,7 +438,7 @@ int ctar_create_regular(ctar_header *header, int fd)
       memset(buf + nbytes, 0, CTAR_BLOCK_SIZE - nbytes);
     }
 
-    if (write(fd, buf, nbytes) == -1)
+    if (write(fd, buf, CTAR_BLOCK_SIZE) == -1)
     {
       perror("Unable to write to archive");
       return -1;
@@ -425,6 +473,7 @@ int ctar_create_symlink(ctar_header *header, int fd)
   // Write header
   header->typeflag[0] = SYMTYPE;
   dec2oct(0, header->size, CTAR_SIZE_SIZE); // Size is always 0 for symbolic links
+  compute_checksum(header);
 
   if (write(fd, header, sizeof(ctar_header)) == -1)
   {
@@ -443,6 +492,7 @@ int ctar_create_directory(ctar_header *header, int fd)
   // Write header
   header->typeflag[0] = DIRTYPE;
   dec2oct(0, header->size, CTAR_SIZE_SIZE); // Size is always 0 for directories
+  compute_checksum(header);
 
   if (write(fd, header, sizeof(ctar_header)) == -1)
   {
@@ -466,8 +516,13 @@ int ctar_create_directory(ctar_header *header, int fd)
       continue;
     }
 
-    char path[CTAR_NAME_SIZE];
+    // If header->name ends with a slash, we need to remove it
+    if (header->name[strlen(header->name) - 1] == '/')
+    {
+      header->name[strlen(header->name) - 1] = '\0';
+    }
 
+    char path[CTAR_NAME_SIZE];
     int snprint_result = snprintf(path, sizeof(path), "%s/%s", header->name, entry->d_name);
     if (snprint_result >= sizeof(path))
     {

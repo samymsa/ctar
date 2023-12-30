@@ -93,6 +93,14 @@ int ctar_extract_directory(ctar_header *header, int fd);
 int ctar_create(ctar_args *args, int fd);
 
 /**
+ * @brief Create the end of the archive.
+ *
+ * @param fd The file descriptor of the archive.
+ * @return int 0 if successful, -1 otherwise.
+ */
+int ctar_create_end_of_archive(int fd);
+
+/**
  * @brief Create a ctar entry.
  *
  * @param path The path of the entry.
