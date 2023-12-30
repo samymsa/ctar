@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -101,4 +102,17 @@ void compute_checksum(ctar_header *header)
   // The checksum is terminated by a null and a space.
   header->chksum[CTAR_CHKSUM_SIZE - 2] = '\0';
   header->chksum[CTAR_CHKSUM_SIZE - 1] = ' ';
+}
+
+int ctar_mkstemp()
+{
+  char tmp_archive_path[] = "/tmp/ctar-XXXXXX";
+  int tmp_fd = mkstemp(tmp_archive_path);
+  if (tmp_fd == -1)
+  {
+    perror("Unable to create temporary file");
+    return -1;
+  }
+  
+  return tmp_fd;
 }

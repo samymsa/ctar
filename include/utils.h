@@ -65,4 +65,11 @@ int get_nblocks(ctar_header *header);
  */
 void compute_checksum(ctar_header *header);
 
+/**
+ * @brief Create a temporary file.
+ *
+ * @return int The file descriptor of the temporary file.
+ */
+int ctar_mkstemp();
+
 #endif // _UTILS_H

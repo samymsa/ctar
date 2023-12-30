@@ -17,7 +17,7 @@ int ctar_open(ctar_args *args);
  * @param fd The file descriptor of the archive.
  * @return int 0 if successful, -1 otherwise.
  */
-int ctar_close(int fd);
+int ctar_close(ctar_args *args, int fd);
 
 /**
  * @brief List the content of the archive.

@@ -11,6 +11,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include "ctar.h"
+#include "ctar_zlib.h"
 #include "utils.h"
 
 /**
@@ -19,6 +20,30 @@
  */
 int ctar_open(ctar_args *args)
 {
+  if (args->compress && args->create)
+  {
+    // Create a tmp file to work on
+    return ctar_mkstemp();
+  }
+
+  if (args->compress && (args->list || args->extract))
+  {
+    // Create a tmp file to work on
+    int tmp_fd = ctar_mkstemp();
+    if (tmp_fd == -1)
+    {
+      return -1;
+    }
+
+    // Decompress archive into the tmp file
+    if (ctar_decompress(args->archive, tmp_fd) == -1)
+    {
+      return -1;
+    }
+
+    return tmp_fd;
+  }
+
   int flags = args->list || args->extract ? O_RDONLY : O_WRONLY | O_CREAT | O_TRUNC;
   int fd = open(args->archive, flags, 0644);
   if (fd == -1)
@@ -30,8 +55,17 @@ int ctar_open(ctar_args *args)
   return fd;
 }
 
-int ctar_close(int fd)
+int ctar_close(ctar_args *args, int fd)
 {
+  if (args->compress && args->create)
+  {
+    // Compress the tmp file into the original archive path
+    if (ctar_compress(args->archive, fd) == -1)
+    {
+      return -1;
+    }
+  }
+
   if (close(fd) == -1)
   {
     perror("Unable to close archive");
