@@ -5,18 +5,42 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include <string.h>
+#include <libgen.h>
 #include "ctar.h"
 #include "zlib.h"
+#include "utils.h"
 
-int ctar_list(ctar_args *args)
+/**
+ * If args->list or args->extract is true, the archive is opened in read-only mode.
+ * Otherwise, the archive is opened in write-only mode.
+ */
+int ctar_open(ctar_args *args)
 {
-  int fd = open(args->archive, O_RDONLY);
+  int flags = args->list || args->extract ? O_RDONLY : O_WRONLY | O_CREAT | O_TRUNC;
+  int fd = open(args->archive, flags, 0644);
   if (fd == -1)
   {
     perror("Unable to open archive");
     return -1;
   }
 
+  return fd;
+}
+
+int ctar_close(int fd)
+{
+  if (close(fd) == -1)
+  {
+    perror("Unable to close archive");
+    return -1;
+  }
+
+  return 0;
+}
+
+int ctar_list(ctar_args *args, int fd)
+{
   ctar_header header;
   int nbytes;
   int blank_header_count = 0;
@@ -34,13 +58,9 @@ int ctar_list(ctar_args *args)
       return -1;
     }
 
-    // Go to the next header, skipping the data blocks
-    int size = oct2dec(header.size, CTAR_SIZE_SIZE);
-    int nblocks = size / CTAR_BLOCK_SIZE + (size % CTAR_BLOCK_SIZE == 0 ? 0 : 1);
-    int data_size = nblocks * CTAR_BLOCK_SIZE;
-    if (lseek(fd, data_size, SEEK_CUR) == -1)
+    if (skip_data_blocks(fd, &header) == -1)
     {
-      perror("Unable to seek archive");
+      perror("Unable to skip data blocks");
       return -1;
     }
   }
@@ -48,12 +68,6 @@ int ctar_list(ctar_args *args)
   if (nbytes == -1)
   {
     perror("Unable to read archive");
-    return -1;
-  }
-
-  if (close(fd) == -1)
-  {
-    perror("Unable to close archive");
     return -1;
   }
 
@@ -121,7 +135,15 @@ int ctar_list_entry(ctar_header *header, bool verbose)
   }
 
   // File name
-  printf("%.*s\n", CTAR_NAME_SIZE, header->name);
+  printf("%.*s", CTAR_NAME_SIZE, header->name);
+
+  // Link name (if applicable)
+  if (verbose && header->typeflag[0] == SYMTYPE)
+  {
+    printf(" -> %.*s", CTAR_LINKNAME_SIZE, header->linkname);
+  }
+
+  printf("\n");
 
   return 0;
 }
@@ -238,28 +260,147 @@ int test_compression()
   return 0;
 }
 
-int oct2dec(char *oct, int size)
+int ctar_extract(ctar_args *args, int fd)
 {
-  int dec = 0;
-  for (int i = 0; i < size; i++)
+  ctar_header header;
+  int nbytes;
+  int blank_header_count = 0;
+
+  while ((nbytes = read(fd, &header, sizeof(ctar_header))) > 0 && blank_header_count < 2)
   {
-    if (oct[i] == '\0')
+    if (is_header_blank(&header))
     {
-      break;
+      blank_header_count++;
+      continue;
     }
-    dec = dec * 8 + oct[i] - '0';
+
+    if (ctar_extract_entry(&header, args->verbose, fd) == -1)
+    {
+      return -1;
+    }
   }
-  return dec;
+
+  if (nbytes == -1)
+  {
+    perror("Unable to read archive");
+    return -1;
+  }
+
+  return 0;
 }
 
-bool is_header_blank(ctar_header *header)
+/**
+ * The following file types are supported:
+ * - regular file (REGTYPE): '-'
+ * - symbolic link (SYMTYPE): 'l'
+ * - directory (DIRTYPE): 'd'
+ */
+int ctar_extract_entry(ctar_header *header, bool verbose, int fd)
 {
-  for (int i = 0; i < sizeof(ctar_header); i++)
+  if (verbose)
   {
-    if (((char *)header)[i] != 0)
-    {
-      return false;
-    }
+    printf("%.*s\n", CTAR_NAME_SIZE, header->name);
   }
-  return true;
+
+  switch (header->typeflag[0])
+  {
+  case REGTYPE:
+  case AREGTYPE:
+  case CONTTYPE:
+    return ctar_extract_regular(header, fd);
+  case SYMTYPE:
+    return ctar_extract_symlink(header, fd);
+  case DIRTYPE:
+    return ctar_extract_directory(header, fd);
+  default:
+    fprintf(stderr, "Warning: unsupported file type '%c', skipping entry\n", header->typeflag[0]);
+    return 0;
+  }
+}
+
+int ctar_extract_regular(ctar_header *header, int fd)
+{
+  // Prepare directory
+  // Create a copy of header name because dirname() may modify it
+  char *dir = strdup(header->name);
+  if (mkdir_recursive(dirname(dir), 0755) == -1)
+  {
+    perror("Unable to create parent directory");
+    return -1;
+  }
+  free(dir);
+
+  // Open output file
+  int mode = oct2dec(header->mode, CTAR_MODE_SIZE);
+  int out_fd = open(header->name, O_WRONLY | O_CREAT | O_TRUNC, mode);
+  if (out_fd == -1)
+  {
+    perror("Unable to open output file");
+    return -1;
+  }
+
+  // Copy data blocks
+  int remaining = oct2dec(header->size, CTAR_SIZE_SIZE);
+  char buf[CTAR_BLOCK_SIZE];
+  while (remaining > 0)
+  {
+    int nbytes = read(fd, buf, CTAR_BLOCK_SIZE);
+    if (nbytes == -1)
+    {
+      perror("Unable to read archive");
+      return -1;
+    }
+
+    int nbytes_to_write = nbytes < remaining ? nbytes : remaining;
+    if (write(out_fd, buf, nbytes_to_write) == -1)
+    {
+      perror("Unable to write to output file");
+      return -1;
+    }
+    remaining -= nbytes;
+  }
+
+  // Close output file
+  if (close(out_fd) == -1)
+  {
+    perror("Unable to close output file");
+    return -1;
+  }
+
+  return 0;
+}
+
+int ctar_extract_symlink(ctar_header *header, int fd)
+{
+  if (skip_data_blocks(fd, header) == -1)
+  {
+    perror("Unable to skip data blocks");
+    return -1;
+  }
+
+  if (symlink(header->linkname, header->name) == -1)
+  {
+    perror("Unable to create symbolic link");
+    return -1;
+  }
+
+  return 0;
+}
+
+int ctar_extract_directory(ctar_header *header, int fd)
+{
+  if (skip_data_blocks(fd, header) == -1)
+  {
+    perror("Unable to skip data blocks");
+    return -1;
+  }
+
+  int mode = oct2dec(header->mode, CTAR_MODE_SIZE);
+  if (mkdir_recursive(header->name, mode) == -1)
+  {
+    perror("Unable to create directory");
+    return -1;
+  }
+
+  return 0;
 }

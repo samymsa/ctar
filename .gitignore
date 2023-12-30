@@ -16,3 +16,4 @@ docs/latex
 *.tar.gz
 *.pdf
 .vscode/
+tests
