@@ -108,7 +108,7 @@ int ctar_mkstemp()
 {
   char tmp_archive_path[] = "/tmp/ctar-XXXXXX";
   int tmp_fd = mkstemp(tmp_archive_path);
-  if (tmp_fd == -1)
+  if (tmp_fd == -1 || unlink(tmp_archive_path) == -1)
   {
     perror("Unable to create temporary file");
     return -1;
