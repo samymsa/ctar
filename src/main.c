@@ -13,6 +13,11 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
+  if (args.dir && ctar_chdir(&args) == -1)
+  {
+    return EXIT_FAILURE;
+  }
+
   if ((args.list && ctar_list(&args, fd) == -1) ||
       (args.extract && ctar_extract(&args, fd) == -1) ||
       (args.create && ctar_create(&args, fd) == -1))

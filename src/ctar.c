@@ -165,6 +165,17 @@ int ctar_list_entry(ctar_header *header, bool verbose)
   return 0;
 }
 
+int ctar_chdir(ctar_args *args)
+{
+  if (chdir(args->dir) == -1)
+  {
+    perror("Unable to change directory");
+    return -1;
+  }
+
+  return 0;
+}
+
 int ctar_extract(ctar_args *args, int fd)
 {
   ctar_header header;
