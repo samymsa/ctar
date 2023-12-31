@@ -104,6 +104,22 @@ void compute_checksum(ctar_header *header)
   header->chksum[CTAR_CHKSUM_SIZE - 1] = ' ';
 }
 
+bool is_checksum_valid(ctar_header *header)
+{
+  // Save the original checksum.
+  char chksum[CTAR_CHKSUM_SIZE];
+  memcpy(chksum, header->chksum, CTAR_CHKSUM_SIZE);
+  
+  // Compute the checksum and compare it with the original one.
+  compute_checksum(header);
+  bool is_valid = memcmp(chksum, header->chksum, CTAR_CHKSUM_SIZE) == 0;
+
+  // Restore the original checksum.
+  memcpy(header->chksum, chksum, CTAR_CHKSUM_SIZE);
+
+  return is_valid;
+}
+
 int ctar_mkstemp()
 {
   char tmp_archive_path[] = "/tmp/ctar-XXXXXX";

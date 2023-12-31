@@ -132,6 +132,12 @@ int ctar_list(ctar_args *args, int fd)
  */
 int ctar_list_entry(ctar_header *header, bool verbose)
 {
+  if (!is_checksum_valid(header))
+  {
+    fprintf(stderr, "Warning: checksum mismatch, skipping entry\n");
+    return 0;
+  }
+
   if (verbose)
   {
     // File mode
@@ -268,6 +274,12 @@ int ctar_extract(ctar_args *args, int fd)
  */
 int ctar_extract_entry(ctar_header *header, bool verbose, int fd)
 {
+  if (!is_checksum_valid(header))
+  {
+    fprintf(stderr, "Warning: checksum mismatch, skipping entry\n");
+    return 0;
+  }
+  
   if (verbose)
   {
     printf("%.*s\n", CTAR_NAME_SIZE, header->name);
