@@ -93,4 +93,58 @@ int ctar_extract_symlink(ctar_header *header, int fd);
  */
 int ctar_extract_directory(ctar_header *header, int fd);
 
+/**
+ * @brief Create an archive.
+ *
+ * @param args The arguments of the program.
+ * @param fd The file descriptor of the archive.
+ * @return int 0 if successful, -1 otherwise.
+ */
+int ctar_create(ctar_args *args, int fd);
+
+/**
+ * @brief Create the end of the archive.
+ *
+ * @param fd The file descriptor of the archive.
+ * @return int 0 if successful, -1 otherwise.
+ */
+int ctar_create_end_of_archive(int fd);
+
+/**
+ * @brief Create a ctar entry.
+ *
+ * @param path The path of the entry.
+ * @param verbose Whether to print verbose information.
+ * @param fd The file descriptor of the archive.
+ * @return int 0 if successful, -1 otherwise.
+ */
+int ctar_create_entry(char *path, bool verbose, int fd);
+
+/**
+ * @brief Create a regular file.
+ *
+ * @param header The header of the entry.
+ * @param fd The file descriptor of the archive.
+ * @return int 0 if successful, -1 otherwise.
+ */
+int ctar_create_regular(ctar_header *header, int fd);
+
+/**
+ * @brief Create a symbolic link.
+ *
+ * @param header The header of the entry.
+ * @param fd The file descriptor of the archive.
+ * @return int 0 if successful, -1 otherwise.
+ */
+int ctar_create_symlink(ctar_header *header, int fd);
+
+/**
+ * @brief Create a directory.
+ *
+ * @param header The header of the entry.
+ * @param fd The file descriptor of the archive.
+ * @return int 0 if successful, -1 otherwise.
+ */
+int ctar_create_directory(ctar_header *header, int fd);
+
 #endif // _CTAR_H
