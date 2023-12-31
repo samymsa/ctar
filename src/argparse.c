@@ -1,6 +1,7 @@
 #include <getopt.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 #include "argparse.h"
 
 /**
@@ -61,18 +62,19 @@ void parse_args(int argc, char **argv, ctar_args *args)
     {
     case 'l':
       args->list = true;
-      args->archive = optarg;
+      strncpy(args->archive, optarg, CTAR_ARGS_ARCHIVE_SIZE);
+
       break;
     case 'e':
       args->extract = true;
-      args->archive = optarg;
+      strncpy(args->archive, optarg, CTAR_ARGS_ARCHIVE_SIZE);
       break;
     case 'c':
       args->create = true;
-      args->archive = optarg;
+      strncpy(args->archive, optarg, CTAR_ARGS_ARCHIVE_SIZE);
       break;
     case 'd':
-      args->dir = optarg;
+      strncpy(args->dir, optarg, CTAR_ARGS_DIR_SIZE);
       break;
     case 'z':
       args->compress = true;

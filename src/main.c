@@ -13,7 +13,8 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  if (args.dir && ctar_chdir(&args) == -1)
+  // Change the current working directory to the one specified by the user.
+  if (args.dir[0] && ctar_chdir(&args) == -1)
   {
     return EXIT_FAILURE;
   }
@@ -21,6 +22,12 @@ int main(int argc, char **argv)
   if ((args.list && ctar_list(&args, fd) == -1) ||
       (args.extract && ctar_extract(&args, fd) == -1) ||
       (args.create && ctar_create(&args, fd) == -1))
+  {
+    return EXIT_FAILURE;
+  }
+
+  // Reset the current working directory to the original one.
+  if (args.dir[0] && ctar_chdir(&args) == -1)
   {
     return EXIT_FAILURE;
   }

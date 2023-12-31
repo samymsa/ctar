@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <pwd.h>
 #include <grp.h>
+#include <linux/limits.h>
 #include "ctar.h"
 #include "ctar_zlib.h"
 #include "utils.h"
@@ -199,11 +200,31 @@ int ctar_list_entry(ctar_header *header, bool verbose)
   return 0;
 }
 
+/**
+ * @note This will change the chdir to args->dir.
+ * The old working directory is stored in args->dir.
+ * Call ctar_chdir() again to reset the current working directory.
+ */
 int ctar_chdir(ctar_args *args)
 {
+  // Save the (old) current working directory
+  char old_cwd[CTAR_ARGS_DIR_SIZE];
+  if (getcwd(old_cwd, sizeof(old_cwd)) == NULL)
+  {
+    perror("Unable to get current working directory");
+    return -1;
+  }
+  
   if (chdir(args->dir) == -1)
   {
     perror("Unable to change directory");
+    return -1;
+  }
+
+  // Store old_cwd in args->dir
+  if (strncpy(args->dir, old_cwd, CTAR_ARGS_DIR_SIZE) == NULL)
+  {
+    perror("Unable to store old current working directory");
     return -1;
   }
 
