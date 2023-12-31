@@ -37,9 +37,19 @@ int ctar_list(ctar_args *args, int fd);
  */
 int ctar_list_entry(ctar_header *header, bool verbose);
 
+
+/**
+ * Changes the current working directory of the ctar process.
+ *
+ * @param args The ctar_args structure containing the command-line arguments.
+ * @param fd The file descriptor of the directory to change to.
+ * @return Returns 0 on success, or -1 on failure.
+ */
+int ctar_chdir(ctar_args *args);
+
 /**
  * @brief Extract the content of the archive.
- * 
+ *
  * @param args The arguments of the program.
  * @param fd The file descriptor of the archive.
  * @return int 0 if successful, -1 otherwise.
