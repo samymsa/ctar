@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  if (ctar_close(fd) == -1)
+  if (ctar_close(fd, &args) == -1)
   {
     return EXIT_FAILURE;
   }

@@ -8,8 +8,70 @@
 #include <string.h>
 #include <libgen.h>
 #include "ctar.h"
-#include "zlib.h"
 #include "utils.h"
+
+z_stream ctar_compress(char *src_buf, size_t src_fsize, char *dest_buf, size_t dest_fsize)
+{
+  // zlib struct
+  z_stream defstream;
+  defstream.zalloc = Z_NULL;
+  defstream.zfree = Z_NULL;
+  defstream.opaque = Z_NULL;
+
+  // setup input and compressed output
+  defstream.avail_in = src_fsize;         // size of input
+  defstream.next_in = (Bytef *)src_buf;   // input char array
+  defstream.avail_out = dest_fsize;       // size of output
+  defstream.next_out = (Bytef *)dest_buf; // output char array
+
+  // the actual compression work
+  deflateInit(&defstream, Z_BEST_COMPRESSION);
+  deflate(&defstream, Z_FINISH);
+  deflateEnd(&defstream);
+
+  return defstream;
+}
+
+z_stream ctar_decompress(char *src_buf, size_t src_fsize, char *dest_buf, size_t dest_fsize)
+{
+  // zlib struct
+  z_stream infstream;
+  infstream.zalloc = Z_NULL;
+  infstream.zfree = Z_NULL;
+  infstream.opaque = Z_NULL;
+
+  // setup input and decompressed output
+  infstream.avail_in = src_fsize;         // size of input
+  infstream.next_in = (Bytef *)src_buf;   // input char array
+  infstream.avail_out = dest_fsize; // size of output
+  infstream.next_out = (Bytef *)dest_buf; // output char array
+
+  // the actual decompression work
+  inflateInit(&infstream);
+  inflate(&infstream, Z_NO_FLUSH);
+  inflateEnd(&infstream);
+
+  return infstream;
+}
+
+size_t get_archive_size(int fd)
+{
+  size_t fsize;
+  fsize = lseek(fd, 0, SEEK_END);
+  return fsize;
+}
+
+void remove_substring(char *string, const char *substring)
+{
+  char *substring_pos = strstr(string, substring);
+  if (substring_pos != NULL)
+  {
+    // Calculate the length of the substring
+    size_t len = strlen(substring);
+    // Shift the rest of the string to overwrite the substring
+    memmove(substring_pos, substring_pos + len, strlen(substring_pos + len) + 1);
+  }
+}
 
 /**
  * If args->list or args->extract is true, the archive is opened in read-only mode.
@@ -19,17 +81,108 @@ int ctar_open(ctar_args *args)
 {
   int flags = args->list || args->extract ? O_RDONLY : O_WRONLY | O_CREAT | O_TRUNC;
   int fd = open(args->archive, flags, 0644);
+
   if (fd == -1)
   {
     perror("Unable to open archive");
     return -1;
   }
 
+  if ((args->compress && args->list) || (args->compress && args->extract))
+  {
+    // get the size of the archive
+    size_t fsize = get_archive_size(fd);
+
+    printf("archive.tar.gz : %lu octets\n", fsize);
+
+    // allocate memory for the archive
+    char *src_buf = (char *)malloc(fsize);
+    if (src_buf == NULL)
+    {
+      perror("Memory allocation error");
+      close(fd);
+      return -1;
+    }
+
+    // read the entire compressed archive into a buffer
+    size_t number_read = read(fd, src_buf, fsize);
+    if (number_read == -1)
+    {
+      perror("Unable to read archive");
+      return -1;
+    }
+
+    // decompression process
+    char dest_buf[fsize];
+    z_stream infstream = ctar_decompress(src_buf, fsize, dest_buf, sizeof(dest_buf));
+
+    printf("infstream.avail_in : %x octets\n", infstream.avail_in);
+    printf("infstream.avail_out : %x octets\n", infstream.avail_out);
+
+    // write decompressed data to file
+    remove_substring(args->archive, ".gz");
+    int fd_dest = open(args->archive, O_CREAT | O_WRONLY, 0644);
+    if (fd_dest == -1)
+    {
+      perror("Unable to open archive");
+      return -1;
+    }
+
+    write(fd_dest, dest_buf, infstream.total_out);
+
+    // print the size of the decompressed archive
+    printf("archive.tar : %lu octets\n", infstream.total_out);
+
+    // free the memory allocated and close the file
+    free(src_buf);
+    close(fd_dest);
+  }
+
   return fd;
 }
 
-int ctar_close(int fd)
+int ctar_close(int fd, ctar_args *args)
 {
+  if (args->compress && args->create)
+  {
+    // get the size of the archive
+    off_t fsize = get_archive_size(fd);
+    printf("Taille de l'archive d'origine : %lu octets\n", fsize);
+
+    // allocate memory for the archive
+    char *src_buf = (char *)malloc(fsize);
+    if (src_buf == NULL)
+    {
+      perror("Memory allocation error");
+      close(fd);
+      return -1;
+    }
+
+    // read the entire archive into a buffer
+    ssize_t number_read = read(fd, src_buf, fsize);
+    if (number_read == -1)
+    {
+      perror("Unable to read archive");
+      return -1;
+    }
+
+    // compression process
+    char dest_buf[fsize];
+    z_stream defstream = ctar_compress(src_buf, fsize, dest_buf, sizeof(dest_buf));
+
+    // write compressed data to file
+    args->archive = strcat(args->archive, ".gz");
+    int fd_dest = open(args->archive, O_CREAT | O_WRONLY, 0644);
+    write(fd_dest, dest_buf, defstream.total_out);
+
+    // print the size of the compressed archive
+    printf("Taille de l'archive compressée : %lu octets\n", defstream.total_out);
+
+    // free the memory allocated and close the file
+    free(src_buf);
+    close(fd_dest);
+  }
+
   if (close(fd) == -1)
   {
     perror("Unable to close archive");
@@ -144,118 +297,6 @@ int ctar_list_entry(ctar_header *header, bool verbose)
   }
 
   printf("\n");
-
-  return 0;
-}
-
-z_stream ctar_compress(char *input, size_t input_size, char *output, size_t output_size)
-{
-  // zlib struct
-  z_stream defstream;
-  defstream.zalloc = Z_NULL;
-  defstream.zfree = Z_NULL;
-  defstream.opaque = Z_NULL;
-
-  // setup input and compressed output
-  defstream.avail_in = input_size;      // size of input
-  defstream.next_in = (Bytef *)input;   // input char array
-  defstream.avail_out = output_size;    // size of output
-  defstream.next_out = (Bytef *)output; // output char array
-
-  // the actual compression work
-  deflateInit(&defstream, Z_BEST_COMPRESSION);
-  deflate(&defstream, Z_FINISH);
-  deflateEnd(&defstream);
-
-  return defstream;
-}
-
-z_stream ctar_decompress(char *input, char *output, size_t output_size, z_stream defstream)
-{
-  // zlib struct
-  z_stream infstream;
-  infstream.zalloc = Z_NULL;
-  infstream.zfree = Z_NULL;
-  infstream.opaque = Z_NULL;
-
-  // setup input and decompressed output
-  infstream.avail_in = (uInt)((char *)defstream.next_out - input); // size of input
-  infstream.next_in = (Bytef *)input;                              // input char array
-  infstream.avail_out = output_size;                               // size of output
-  infstream.next_out = (Bytef *)output;                            // output char array
-
-  // the actual decompression work
-  inflateInit(&infstream);
-  inflate(&infstream, Z_NO_FLUSH);
-  inflateEnd(&infstream);
-
-  return infstream;
-}
-
-int test_compression()
-{
-  // open the archive in binary mode
-  FILE *input_archive = fopen("archive.tar", "rb");
-  if (input_archive == NULL)
-  {
-    perror("Error during the opening of the archive");
-    return 1;
-  }
-
-  // get the size of the archive
-  fseek(input_archive, 0, SEEK_END);
-  size_t input_size = ftell(input_archive);
-  fseek(input_archive, 0, SEEK_SET);
-
-  // allocate memory for the archive
-  char *input_buffer = (char *)malloc(input_size);
-  if (input_buffer == NULL)
-  {
-    perror("Erreur d'allocation mémoire");
-    fclose(input_archive);
-    return 1;
-  }
-
-  // print the size of the archive
-  fread(input_buffer, 1, input_size, input_archive);
-  printf("Taille de l'archive d'origine : %lu octets\n", input_size);
-
-  // compression process
-  char output_buffer[input_size];
-  z_stream defstream = ctar_compress(input_buffer, input_size, output_buffer, sizeof(output_buffer));
-
-  // write compressed data to file
-  FILE *output_archive = fopen("compressed-archive.tar.gz", "wb");
-  fwrite(output_buffer, 1, defstream.total_out, output_archive);
-
-  // print the size of the compressed archive
-  printf("Taille de l'archive compressée : %lu octets\n", defstream.total_out);
-
-  // close the files
-  fclose(input_archive);
-  fclose(output_archive);
-
-  // read the entire compressed archive into a buffer
-  input_archive = fopen("compressed-archive.tar.gz", "rb");
-  fread(input_buffer, 1, input_size, input_archive);
-
-  // decompression process
-  char decompressed_buffer[input_size];
-  z_stream infstream = ctar_decompress(input_buffer, decompressed_buffer, sizeof(decompressed_buffer), defstream);
-
-  // write decompressed data to file
-  FILE *decompressed_archive = fopen("decompressed-archive.tar", "wb");
-  fwrite(decompressed_buffer, 1, sizeof(decompressed_buffer), decompressed_archive);
-
-  // print the size of the decompressed archive
-  printf("Taille de l'archive décompressée : %lu octets\n", infstream.total_out);
-
-  // free the memory allocated for the archive
-  free(input_buffer);
-
-  // close the files
-  fclose(input_archive);
-  fclose(decompressed_archive);
 
   return 0;
 }

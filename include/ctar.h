@@ -1,7 +1,46 @@
 #ifndef _CTAR_H
 #define _CTAR_H
 
+#include <zlib.h>
 #include "typedef.h"
+
+/**
+ * Compress archive using zlib compression algorithm.
+ *
+ * @param src_buf A pointer to the archive to be compressed.
+ * @param src_fsize The size of the source buffer.
+ * @param dest_buf A pointer to the buffer where the compressed archive will be stored.
+ * @param dest_fsize The size of the output buffer.
+ * @return A z_stream struct containing information about the compression process.
+ */
+z_stream ctar_compress(char *src_buf, size_t src_fsize, char *dest_buf, size_t dest_fsize);
+
+/**
+ * Decompress archive using zlib decompression algorithm.
+ *
+ * @param src_buf A pointer to the archive to be decompressed.
+ * @param src_fsize The size of the source buffer.
+ * @param dest_buf A pointer to the buffer where the decompressed archive will be stored.
+ * @param dest_fsize The size of the output buffer.
+ * @return A z_stream struct containing information about the decompression process.
+ */
+z_stream ctar_decompress(char *src_buf, size_t src_fsize, char *dest_buf, size_t dest_fsize);
+
+/**
+ * @brief Get the archive size.
+ *
+ * @param fd The file descriptor of the archive.
+ * @return The archive size.
+ */
+size_t get_archive_size(int fd);
+
+/**
+ * @brief Removes a substring from a given string.
+ *
+ * @param string The string from which the substring will be removed.
+ * @param substring The substring to be removed from the string.
+ */
+void remove_substring(char *string, const char *substring);
 
 /**
  * @brief Open an archive in the correct mode.
@@ -17,7 +56,7 @@ int ctar_open(ctar_args *args);
  * @param fd The file descriptor of the archive.
  * @return int 0 if successful, -1 otherwise.
  */
-int ctar_close(int fd);
+int ctar_close(int fd, ctar_args *args);
 
 /**
  * @brief List the content of the archive.
@@ -36,34 +75,6 @@ int ctar_list(ctar_args *args, int fd);
  * @return int 0 if successful, -1 otherwise.
  */
 int ctar_list_entry(ctar_header *header, bool verbose);
-
-/**
- * Compress archive using zlib compression algorithm.
- *
- * @param input A pointer to the archive to be compressed.
- * @param output A pointer to the buffer where the compressed archive will be stored.
- * @param output_size The size of the output buffer.
- * @return A z_stream struct containing information about the compression process.
- */
-z_stream compress_archive(char *input, char *output, size_t output_size);
-
-/**
- * Decompress archive using zlib decompression algorithm.
- *
- * @param input A pointer to the compressed archive.
- * @param output A pointer to the buffer where the decompressed archive will be stored.
- * @param output_size The size of the output buffer.
- * @param defstream A z_stream struct containing the state of the previous compression.
- * @return A z_stream struct containing information about the decompression process.
- */
-z_stream decompress_archive(char *input, char *output, size_t output_size, z_stream defstream);
-
-/**
- * Test compression and decompression using zlib.
- * 
- * @return 0 if successful, 1 otherwise.
- */
-int test_compression();
 
 /**
  * @brief Extract the content of the archive.
