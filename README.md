@@ -32,6 +32,8 @@ It is deployed automatically using the [Doxygen GitHub Pages Deploy Action](http
 ## Usage
 
 ### Syntax
+> **Note:** From now on, the program will be referred to as `ctar` instead of `./bin/ctar` for simplicity.
+
 The syntax of ctar is the following:
 
 ```bash
