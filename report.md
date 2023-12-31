@@ -45,7 +45,8 @@ Le projet est composé de plusieurs dossiers :
 - **/include** : contient les entêtes des fichiers du programme.
 - **/src** : contient les fichiers du programme :
   - **argparse.c** : gère le parsing des arguments.
-  - **ctar.c** : regroupe les principales fonctionnalités du programme : génération d'archive, extraction, compression/décompression, listage des éléments...
+  - **ctar.c** : regroupe les principales fonctionnalités du programme : génération d'archive, extraction, listage des éléments...
+  - **ctar_zlib.c** : gère la compression et décompression d'une archive.
   - **main.c** : point d'entrée du programme.
   - **utils.c** : fonctions usuelles utilisées dans le programme.
 
@@ -62,7 +63,7 @@ Cette stratégie a permis non seulement de maintenir la qualité et la cohérenc
 
 ### Documentation zlib.h
 
-Une autre difficulté rencontrée a été la navigation dans la documentation de la bibliothèque ***zlib***. En effet, cette documentation est concentrée dans un unique fichier volumineux, ***zlib.h***, comptant plus de 1900 lignes. Sa densité et sa structure rendent la lecture et la recherche d'informations spécifiques compliquées. Face à ce défi, nous avons initialement opté pour une approche personnalisée pour la compression et la décompression des données, en s'appuyant sur un [script open-source](https://gist.github.com/arq5x/5315739) pour la compression et la décompression d'une chaîne de caractères. Toutefois, cette décision s'est avérée plus laborieuse que prévu. En effet, la bibliothèque ***zlib*** offre des fonctions natives spécialement conçues pour ces tâches, telles que `gzdopen()`, `uncompress()`, etc., qui auraient facilité notre travail. En optant pour une solution sur mesure, nous avons rendu notre code moins simple et manqué l'opportunité d'exploiter pleinement les fonctionnalités optimisées et éprouvées de ***zlib***. Toutefois, cette expérience a permis à Younes, pour qui la tâche était confiée, de mieux appréhender le langage C et les concepts sous-jacents (typage statique, gestion de la mémoire, pointeurs, gestion des erreurs, etc).
+Une autre difficulté rencontrée a été la navigation dans la documentation de la bibliothèque ***zlib***. En effet, cette documentation est concentrée dans un unique fichier volumineux, ***zlib.h***, comptant plus de 1900 lignes. Sa densité et sa structure rendent la lecture et la recherche d'informations spécifiques compliquées. Face à ce défi, nous avons initialement opté pour une approche personnalisée pour la compression et la décompression des données, en s'appuyant sur un [script open-source](https://gist.github.com/arq5x/5315739) pour la compression et la décompression d'une chaîne de caractères. Toutefois, cette décision s'est avérée plus laborieuse que prévu. En effet, la bibliothèque ***zlib*** offre des fonctions natives spécialement conçues pour ces tâches, telles que `gzopen()`, `gzwrite()`, etc., qui auraient facilité notre travail. En optant pour une solution sur mesure, nous avons rendu notre code moins simple et manqué l'opportunité d'exploiter pleinement les fonctionnalités optimisées et éprouvées de ***zlib***. Toutefois, cette expérience a permis à Younes, pour qui la tâche était confiée, de mieux appréhender le langage C et les concepts sous-jacents (typage statique, gestion de la mémoire, pointeurs, gestion des erreurs, etc).
 
 ## Organisation de travail
 
