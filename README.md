@@ -4,8 +4,8 @@ CTar is a simple tar-like program written in C. It supports the following featur
 - [x] Listing files in a tar archive
 - [X] Extracting files from a tar archive
 - [X] Creating a tar archive
-- [ ] Compressing a tar archive using gzip
-- [ ] Decompressing a tar archive using gzip
+- [X] Compressing a tar archive using gzip
+- [X] Decompressing a tar archive using gzip
 
 gzip compression and decompression are implemented using the [zlib](https://github.com/madler/zlib/tree/master) library.
 
