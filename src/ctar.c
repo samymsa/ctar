@@ -446,7 +446,7 @@ int ctar_create_entry(char *path, bool verbose, int fd)
 
   if (S_ISDIR(st.st_mode))
   {
-    return ctar_create_directory(&header, fd);
+    return ctar_create_directory(&header, verbose, fd);
   }
 
   fprintf(stderr, "Warning: unsupported file type '%c', skipping entry\n", header.typeflag[0]);
@@ -532,7 +532,7 @@ int ctar_create_symlink(ctar_header *header, int fd)
 /**
  * Adding a directory to the archive will recursively add all files and directories inside it.
  */
-int ctar_create_directory(ctar_header *header, int fd)
+int ctar_create_directory(ctar_header *header, bool verbose, int fd)
 {
   // Write header
   header->typeflag[0] = DIRTYPE;
@@ -581,7 +581,7 @@ int ctar_create_directory(ctar_header *header, int fd)
       continue;
     }
 
-    if (ctar_create_entry(path, false, fd) == -1)
+    if (ctar_create_entry(path, verbose, fd) == -1)
     {
       return -1;
     }
