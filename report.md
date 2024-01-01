@@ -69,6 +69,8 @@ Cette stratégie a permis non seulement de maintenir la qualité et la cohérenc
 
 Une autre difficulté rencontrée a été la documentation de la bibliothèque ***zlib***, regroupée dans le fichier dense ***zlib.h*** de plus de 1900 lignes. Au départ, nous avons opté pour une approche personnalisée en compression et décompression, en utilisant un [script open-source](https://gist.github.com/arq5x/5315739). Cependant, cette méthode s'est avérée plus complexe que l'utilisation des fonctions natives de zlib, comme `gzopen()` et `gzwrite()`, qui offrent une meilleure robustesse. La solution a donc été réimplementée en conséquence. Toutefois, cette expérience a été bénéfique pour Younes, en charge de cette tâche, lui permettant de se familiariser davantage avec le langage C et ses concepts clés.
 
+<div class="page"></div>
+
 ## Organisation de travail
 
 ### Gitflow
@@ -81,7 +83,9 @@ Au sein de notre binôme, la répartition des tâches a été planifiée pour ex
 
 ### Tests
 
-Durant le développement, nous avons opté pour une approche pragmatique en matière de tests, en les effectuant à la volée plutôt que de mettre en place des tests unitaires structurés. Cette méthode nous a permis de tester rapidement notre programme dans des conditions réelles d'utilisation. Cette approche a été suffisante pour répondre aux exigences et à la portée de notre projet, permettant une validation efficace des fonctionnalités clés et une adaptation rapide aux changements et aux corrections nécessaires.
+Nous avons privilégié des tests fonctionnels à des tests unitaires pour leur simplicité et rapidité d'exécution, et utilisé `gcov` pour évaluer la couverture de code, atteignant des scores satisfaisants de **100%** pour les fonctions et **72.3%** pour les lignes. Concernant les lignes, la couverture n'a pas atteint 100% principalement en raison des segments de code dédiés aux mécanismes de gestion d'erreur, qui étaient moins fréquemment exécutés.
+
+![Couverture de code](code-coverage.png)
 
 ## Conclusion
 
