@@ -65,4 +65,20 @@ int get_nblocks(ctar_header *header);
  */
 void compute_checksum(ctar_header *header);
 
+/**
+ * @brief Check if the checksum of a header is valid.
+ *
+ * @param header The header to check.
+ * @return true If the checksum is valid.
+ * @return false If the checksum is not valid.
+ */
+bool is_checksum_valid(ctar_header *header);
+
+/**
+ * @brief Create a temporary file.
+ *
+ * @return int The file descriptor of the temporary file.
+ */
+int ctar_mkstemp();
+
 #endif // _UTILS_H

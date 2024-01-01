@@ -4,10 +4,34 @@ CTar is a simple tar-like program written in C. It supports the following featur
 - [x] Listing files in a tar archive
 - [X] Extracting files from a tar archive
 - [X] Creating a tar archive
-- [ ] Compressing a tar archive using gzip
-- [ ] Decompressing a tar archive using gzip
+- [X] Compressing a tar archive using gzip
+- [X] Decompressing a tar archive using gzip
 
 gzip compression and decompression are implemented using the [zlib](https://github.com/madler/zlib/tree/master) library.
+
+## Table of Contents
+
+- [CTar](#ctar)
+  - [Table of Contents](#table-of-contents)
+  - [Documentation](#documentation)
+  - [Prerequisites](#prerequisites)
+  - [Getting Started](#getting-started)
+  - [Usage](#usage)
+    - [Syntax](#syntax)
+    - [Arguments](#arguments)
+      - [Required arguments:](#required-arguments)
+      - [Optional arguments:](#optional-arguments)
+    - [Examples](#examples)
+      - [List Files in Archive:](#list-files-in-archive)
+      - [Extract Files from Archive:](#extract-files-from-archive)
+      - [Create Archive:](#create-archive)
+      - [Compress and Decompress:](#compress-and-decompress)
+      - [Change Directory Before Operation:](#change-directory-before-operation)
+      - [Verbose Mode:](#verbose-mode)
+      - [Help:](#help)
+  - [Make Targets](#make-targets)
+  - [Authors](#authors)
+
 
 ## Documentation
 
@@ -23,7 +47,7 @@ It is deployed automatically using the [Doxygen GitHub Pages Deploy Action](http
 - [Lcov](https://packages.ubuntu.com/focal/lcov) (optional, for generating coverage reports) : `sudo apt install lcov`
 
 
-## Installation
+## Getting Started
 
 1. Compile the program using `make`
 2. Run the program using `./bin/ctar`
@@ -32,6 +56,8 @@ It is deployed automatically using the [Doxygen GitHub Pages Deploy Action](http
 ## Usage
 
 ### Syntax
+> **Note:** From now on, the program will be referred to as `ctar` instead of `./bin/ctar` for simplicity.
+
 The syntax of ctar is the following:
 
 ```bash
@@ -78,6 +104,18 @@ ctar {-l|-e|-c} ARCHIVE [-d DIR] [-zvh] [FILES...]
 
 #### Help:
 - `ctar -h`: Display help.
+
+## Make Targets
+
+Here is non-exhaustive list of the available make targets:
+
+- `make` or `make all`: Compile the program
+- `make docs`: Generate documentation
+- `make tests`: Run tests
+- `make gcov`: Generate coverage reports
+- `make package`: Generate a tarball of the project
+- `make clean`: Remove object files
+- `make mrproper`: Remove object files, binaries, documentation, tests generated files, and coverage reports
 
 ## Authors
 

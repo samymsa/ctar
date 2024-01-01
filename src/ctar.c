@@ -10,7 +10,9 @@
 #include <dirent.h>
 #include <pwd.h>
 #include <grp.h>
+#include <linux/limits.h>
 #include "ctar.h"
+#include "ctar_zlib.h"
 #include "utils.h"
 
 /**
@@ -19,6 +21,30 @@
  */
 int ctar_open(ctar_args *args)
 {
+  if (args->compress && args->create)
+  {
+    // Create a tmp file to work on
+    return ctar_mkstemp();
+  }
+
+  if (args->compress && (args->list || args->extract))
+  {
+    // Create a tmp file to work on
+    int tmp_fd = ctar_mkstemp();
+    if (tmp_fd == -1)
+    {
+      return -1;
+    }
+
+    // Decompress archive into the tmp file
+    if (ctar_decompress(args->archive, tmp_fd) == -1)
+    {
+      return -1;
+    }
+
+    return tmp_fd;
+  }
+
   int flags = args->list || args->extract ? O_RDONLY : O_WRONLY | O_CREAT | O_TRUNC;
   int fd = open(args->archive, flags, 0644);
   if (fd == -1)
@@ -30,8 +56,17 @@ int ctar_open(ctar_args *args)
   return fd;
 }
 
-int ctar_close(int fd)
+int ctar_close(ctar_args *args, int fd)
 {
+  if (args->compress && args->create)
+  {
+    // Compress the tmp file into the original archive path
+    if (ctar_compress(args->archive, fd) == -1)
+    {
+      return -1;
+    }
+  }
+
   if (close(fd) == -1)
   {
     perror("Unable to close archive");
@@ -97,6 +132,12 @@ int ctar_list(ctar_args *args, int fd)
  */
 int ctar_list_entry(ctar_header *header, bool verbose)
 {
+  if (!is_checksum_valid(header))
+  {
+    fprintf(stderr, "Warning: checksum mismatch, skipping entry\n");
+    return 0;
+  }
+
   if (verbose)
   {
     // File mode
@@ -165,11 +206,31 @@ int ctar_list_entry(ctar_header *header, bool verbose)
   return 0;
 }
 
+/**
+ * @note This will change the chdir to args->dir.
+ * The old working directory is stored in args->dir.
+ * Call ctar_chdir() again to reset the current working directory.
+ */
 int ctar_chdir(ctar_args *args)
 {
+  // Save the (old) current working directory
+  char old_cwd[CTAR_ARGS_DIR_SIZE];
+  if (getcwd(old_cwd, sizeof(old_cwd)) == NULL)
+  {
+    perror("Unable to get current working directory");
+    return -1;
+  }
+  
   if (chdir(args->dir) == -1)
   {
     perror("Unable to change directory");
+    return -1;
+  }
+
+  // Store old_cwd in args->dir
+  if (strncpy(args->dir, old_cwd, CTAR_ARGS_DIR_SIZE) == NULL)
+  {
+    perror("Unable to store old current working directory");
     return -1;
   }
 
@@ -213,6 +274,12 @@ int ctar_extract(ctar_args *args, int fd)
  */
 int ctar_extract_entry(ctar_header *header, bool verbose, int fd)
 {
+  if (!is_checksum_valid(header))
+  {
+    fprintf(stderr, "Warning: checksum mismatch, skipping entry\n");
+    return 0;
+  }
+  
   if (verbose)
   {
     printf("%.*s\n", CTAR_NAME_SIZE, header->name);
@@ -412,7 +479,7 @@ int ctar_create_entry(char *path, bool verbose, int fd)
 
   if (S_ISDIR(st.st_mode))
   {
-    return ctar_create_directory(&header, fd);
+    return ctar_create_directory(&header, verbose, fd);
   }
 
   fprintf(stderr, "Warning: unsupported file type '%c', skipping entry\n", header.typeflag[0]);
@@ -498,7 +565,7 @@ int ctar_create_symlink(ctar_header *header, int fd)
 /**
  * Adding a directory to the archive will recursively add all files and directories inside it.
  */
-int ctar_create_directory(ctar_header *header, int fd)
+int ctar_create_directory(ctar_header *header, bool verbose, int fd)
 {
   // Write header
   header->typeflag[0] = DIRTYPE;
@@ -547,7 +614,7 @@ int ctar_create_directory(ctar_header *header, int fd)
       continue;
     }
 
-    if (ctar_create_entry(path, false, fd) == -1)
+    if (ctar_create_entry(path, verbose, fd) == -1)
     {
       return -1;
     }

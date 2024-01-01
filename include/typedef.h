@@ -3,6 +3,10 @@
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <linux/limits.h>
+
+#define CTAR_ARGS_ARCHIVE_SIZE PATH_MAX
+#define CTAR_ARGS_DIR_SIZE PATH_MAX
 
 #define CTAR_NAME_SIZE 100
 #define CTAR_MODE_SIZE 8
@@ -37,27 +41,25 @@
 #define CTAR_ARGS_INIT \
   (ctar_args)          \
   {                    \
-    .archive = NULL,   \
-    .files = NULL,     \
-    .dir = NULL,       \
     .list = false,     \
     .extract = false,  \
     .create = false,   \
     .compress = false, \
     .verbose = false,  \
+    .files = NULL,     \
   }
 
 /** @brief Binary options structure */
 typedef struct ctar_args
 {
-  char *archive;
-  char **files;
-  char *dir;
   bool list;
   bool extract;
   bool create;
   bool compress;
   bool verbose;
+  char **files;
+  char archive[CTAR_ARGS_ARCHIVE_SIZE];
+  char dir[CTAR_ARGS_DIR_SIZE];
 } ctar_args;
 
 #define CTAR_HEADER_INIT   \

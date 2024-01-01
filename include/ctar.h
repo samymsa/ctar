@@ -17,7 +17,7 @@ int ctar_open(ctar_args *args);
  * @param fd The file descriptor of the archive.
  * @return int 0 if successful, -1 otherwise.
  */
-int ctar_close(int fd);
+int ctar_close(ctar_args *args, int fd);
 
 /**
  * @brief List the content of the archive.
@@ -142,9 +142,10 @@ int ctar_create_symlink(ctar_header *header, int fd);
  * @brief Create a directory.
  *
  * @param header The header of the entry.
+ * @param verbose Whether to print verbose information.
  * @param fd The file descriptor of the archive.
  * @return int 0 if successful, -1 otherwise.
  */
-int ctar_create_directory(ctar_header *header, int fd);
+int ctar_create_directory(ctar_header *header, bool verbose, int fd);
 
 #endif // _CTAR_H
