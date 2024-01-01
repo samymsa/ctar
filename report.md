@@ -69,6 +69,8 @@ Cette stratégie a permis non seulement de maintenir la qualité et la cohérenc
 
 Une autre difficulté rencontrée a été la documentation de la bibliothèque ***zlib***, regroupée dans le fichier dense ***zlib.h*** de plus de 1900 lignes. Au départ, nous avons opté pour une approche personnalisée en compression et décompression, en utilisant un [script open-source](https://gist.github.com/arq5x/5315739). Cependant, cette méthode s'est avérée plus complexe que l'utilisation des fonctions natives de zlib, comme `gzopen()` et `gzwrite()`, qui offrent une meilleure robustesse. La solution a donc été réimplementée en conséquence. Toutefois, cette expérience a été bénéfique pour Younes, en charge de cette tâche, lui permettant de se familiariser davantage avec le langage C et ses concepts clés.
 
+<div class="page"></div>
+
 ## Organisation de travail
 
 ### Gitflow

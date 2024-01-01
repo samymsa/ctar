@@ -15,4 +15,5 @@ docs/latex
 !**/.gitkeep
 *.tar.gz
 *.pdf
+!report.pdf
 tests
