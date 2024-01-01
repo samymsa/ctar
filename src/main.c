@@ -13,12 +13,14 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  if (args.list && ctar_list(&args, fd) == -1)
+  if (args.dir && ctar_chdir(&args) == -1)
   {
     return EXIT_FAILURE;
   }
 
-  if (args.extract && ctar_extract(&args, fd) == -1)
+  if ((args.list && ctar_list(&args, fd) == -1) ||
+      (args.extract && ctar_extract(&args, fd) == -1) ||
+      (args.create && ctar_create(&args, fd) == -1))
   {
     return EXIT_FAILURE;
   }
@@ -28,20 +30,5 @@ int main(int argc, char **argv)
     return EXIT_FAILURE;
   }
 
-  // printf("PARSED ARGS:\n");
-  // printf("archive: %s\n", args.archive);
-  // printf("dir: %s\n", args.dir);
-  // printf("list: %d\n", args.list);
-  // printf("extract: %d\n", args.extract);
-  // printf("create: %d\n", args.create);
-  // printf("compress: %d\n", args.compress);
-  // printf("verbose: %d\n", args.verbose);
-  // printf("files: ");
-  // for (int i = 0; args.files != NULL && args.files[i] != NULL; i++)
-  // {
-  //   printf("%s ", args.files[i]);
-  // }
-  // printf("\n");
-  
   return EXIT_SUCCESS;
 }
