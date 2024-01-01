@@ -77,4 +77,4 @@ mrproper: clean
 	rm -rf $(GCOV_DIR)/*
 	rm -rf $(TEST_DIR)/
 
-.PHONY: all docs tests gcov package clean mrproper
+.PHONY: all docs gcov package clean mrproper

@@ -111,7 +111,6 @@ Here is non-exhaustive list of the available make targets:
 
 - `make` or `make all`: Compile the program
 - `make docs`: Generate documentation
-- `make tests`: Run tests
 - `make gcov`: Generate coverage reports
 - `make package`: Generate a tarball of the project
 - `make clean`: Remove object files
