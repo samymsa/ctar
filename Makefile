@@ -39,19 +39,21 @@ docs:
 gcov: $(GEXEC)
 	# Run tests to generate gcov files
 	mkdir -p $(TEST_DIR)
+	ln -s $(INC_DIR) $(TEST_DIR)/to_include || true
 	$(GCOV_DIR)/$(GEXEC) || true
 	$(GCOV_DIR)/$(GEXEC) -h || true
 	$(GCOV_DIR)/$(GEXEC) --wrong || true
 	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar . || true
 	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar -d include/ . || true
-	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar -d .github/ workflows || true
+	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar -d .github/ workflows $(TEST_DIR)/to_include || true
 	$(GCOV_DIR)/$(GEXEC) -l tests/test.tar || true
 	$(GCOV_DIR)/$(GEXEC) -l tests/test.tar -v || true
 	$(GCOV_DIR)/$(GEXEC) -e tests/test.tar -d tests/ || true
 	$(GCOV_DIR)/$(GEXEC) -e tests/test.tar -d tests/ -v || true
 
+	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar.gz -z . || true
 	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar.gz -z -v -d include/ . || true
-	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar.gz -z -v src || true
+	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar.gz -z -v src $(TEST_DIR)/to_include || true
 	$(GCOV_DIR)/$(GEXEC) -l tests/test.tar.gz -z || true
 	$(GCOV_DIR)/$(GEXEC) -l tests/test.tar.gz -z -v || true
 	$(GCOV_DIR)/$(GEXEC) -e tests/test.tar.gz -d tests/ -z || true
@@ -73,6 +75,6 @@ mrproper: clean
 	rm -rf $(DOC_DIR)/latex/
 	rm -rf $(DOC_DIR)/html/
 	rm -rf $(GCOV_DIR)/*
-	rm -rf $(TEST_DIR)/*
+	rm -rf $(TEST_DIR)/
 
 .PHONY: all docs tests gcov package clean mrproper
