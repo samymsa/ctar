@@ -36,7 +36,7 @@ void print_usage(char *bin_name)
   char *params = "  -l, --list: List files in archive\n"
                  "  -e, --extract: Extract files from archive\n"
                  "  -c, --create: Create archive\n"
-                 "  -d, --directory DIR: Change to DIR before performing any operations. This option is order-sensitive, i.e. it affects all options that follow.\n"
+                 "  -d, --directory DIR: Change to DIR before performing any operations.\n"
                  "  -z, --compress: Compress or decompress the archive using gzip\n"
                  "  -v, --verbose: enable verbose mode\n"
                  "  -h, --help: display this help\n"
@@ -46,13 +46,14 @@ void print_usage(char *bin_name)
 }
 
 /**
- * This function may exit with EXIT_FAILURE if one of the following conditions is met:
+ * This function returns -1 if:
  * - the user specifies more than one of -l, -e, -c
+ * - the user specifies -c without specifying any files
  * - the user specifies an invalid option
  * 
- * If the user specifies -h (or --help), the function prints the usage and exits with EXIT_SUCCESS.
+ * @note If the user specifies -h (or --help), the function prints the usage and exits with EXIT_SUCCESS.
  */
-void parse_args(int argc, char **argv, ctar_args *args)
+int parse_args(int argc, char **argv, ctar_args *args)
 {
   int opt;
   int opt_index = 0;
@@ -86,19 +87,26 @@ void parse_args(int argc, char **argv, ctar_args *args)
       print_usage(argv[0]);
       exit(EXIT_SUCCESS);
     default:
-      fprintf(stderr, "Try '%s -h' or '%s --help' for more information.\n", argv[0], argv[0]);
-      exit(EXIT_FAILURE);
+      return -1;
     }
   }
 
   if (args->list + args->extract + args->create != 1)
   {
     fprintf(stderr, "You must specify exactly one of -l, -e, -c.\n");
-    exit(EXIT_FAILURE);
+    return -1;
   }
 
   if (argc > optind)
   {
     args->files = argv + optind;
   }
+
+  if (args->create && args->files == NULL)
+  {
+    fprintf(stderr, "Cowardly refusing to create an empty archive.\n");
+    return -1;
+  }
+
+  return 0;
 }

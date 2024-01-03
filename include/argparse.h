@@ -16,7 +16,8 @@ void print_usage(char *bin_name);
  * @param argc number of arguments
  * @param argv arguments
  * @param args @ref ctar_args output structure
+ * @return int 0 if success, -1 otherwise
  */
-void parse_args(int argc, char **argv, ctar_args *args);
+int parse_args(int argc, char **argv, ctar_args *args);
 
 #endif // _ARGPARSE_H
