@@ -5,7 +5,11 @@
 int main(int argc, char **argv)
 {
   ctar_args args = CTAR_ARGS_INIT;
-  parse_args(argc, argv, &args);
+  if (parse_args(argc, argv, &args) == -1)
+  {
+    fprintf(stderr, "Try '%s -h' or '%s --help' for more information.\n", argv[0], argv[0]);
+    return EXIT_FAILURE;
+  }
 
   int fd = ctar_open(&args);
   if (fd == -1)
