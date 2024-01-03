@@ -43,6 +43,7 @@ gcov: $(GEXEC)
 	$(GCOV_DIR)/$(GEXEC) || true
 	$(GCOV_DIR)/$(GEXEC) -h || true
 	$(GCOV_DIR)/$(GEXEC) --wrong || true
+	$(GCOV_DIR)/$(GEXEC) -c || true
 	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar . || true
 	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar -d include/ . || true
 	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar -d .github/ workflows $(TEST_DIR)/to_include || true
@@ -51,6 +52,7 @@ gcov: $(GEXEC)
 	$(GCOV_DIR)/$(GEXEC) -e tests/test.tar -d tests/ || true
 	$(GCOV_DIR)/$(GEXEC) -e tests/test.tar -d tests/ -v || true
 
+	$(GCOV_DIR)/$(GEXEC) -c -z || true
 	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar.gz -z . || true
 	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar.gz -z -v -d include/ . || true
 	$(GCOV_DIR)/$(GEXEC) -c tests/test.tar.gz -z -v src $(TEST_DIR)/to_include || true

@@ -83,7 +83,7 @@ Au sein de notre binôme, la répartition des tâches a été planifiée pour ex
 
 ### Tests
 
-Nous avons privilégié des tests fonctionnels à des tests unitaires pour leur simplicité et rapidité d'exécution, et utilisé `gcov` pour évaluer la couverture de code, atteignant des scores satisfaisants de **100%** pour les fonctions et **72.3%** pour les lignes. Concernant les lignes, la couverture n'a pas atteint 100% principalement en raison des segments de code dédiés aux mécanismes de gestion d'erreur, qui étaient moins fréquemment exécutés.
+Nous avons privilégié des tests fonctionnels à des tests unitaires pour leur simplicité et rapidité d'exécution, et utilisé `gcov` pour évaluer la couverture de code, atteignant des scores satisfaisants de **100%** pour les fonctions et **72.5%** pour les lignes. Concernant les lignes, la couverture n'a pas atteint 100% principalement en raison des segments de code dédiés aux mécanismes de gestion d'erreur, qui étaient moins fréquemment exécutés.
 
 ![Couverture de code](code-coverage.png)
 
